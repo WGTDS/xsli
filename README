@@ -1,0 +1,44 @@
+#####################################################################
+
+    SLI Extractor
+
+    "White Guy That Don't Smile"
+    2021/10/30, Saturday, October 30th; 0735 HOURS
+
+#####################################################################
+
+Description:
+
+    This is a personal tool of mine that I lazily threw together
+    as a facility for dumping SLI data from Nintendo's binaries,
+    in addition to, using the data for analysis and rearranging
+    Nintendo 64 ROMs back to their native endianness.
+
+#####################################################################
+
+Instructions:
+
+    I used GCC to build this on 64-bit Linux, Mac, and Windows,
+    and have provided a Makefile that may serve as a convenience.
+
+    Simply "cd" into the directory with the Makefile,
+    and type "make" to build a binary, and "make clean"
+    to remove the compiled binary.
+
+#####################################################################
+
+Motive:
+
+    I'm lazy.
+
+#####################################################################
+
+Special Mentions:
+
+    Nintendo EAD & "Melody-Yoshi":
+        For doing something neat with the Lempel-Ziv compression
+        algorithm while simultaneously leaving the community
+        scratching their heads as to what the acronym "SLI" even
+        means for over a quarter of a century.
+
+#####################################################################
