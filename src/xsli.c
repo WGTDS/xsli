@@ -125,9 +125,10 @@
 
 
 
-/*---------------------------------------------
-Some N64 ROMS contain data using an SLI header.
----------------------------------------------*/
+/*--------------------------------------------
+Some N64 ROMS contain data using an SLI header
+prefixed with "GZIP".
+--------------------------------------------*/
 #define GZIP 0x475A4950
 
 
@@ -221,7 +222,7 @@ static u32 cleanUpOnError( FILE *SLI, FILE *DECODED,
 
 static void decbuf( const u8 *srcbuf, u8 **dst, const u32 position,
                     const u32 magic, const u32 sizeDecoded )
-  {
+{
   u8 *dest;
   u8 *previous;
   u32 masks = 0;
@@ -511,7 +512,7 @@ err:
 
 
 
-static int getBlockLength( const u8 *srcbuf, u32 position,
+static int getBlockLength( const u8 *srcbuf, const u32 position,
                            const u32 magic, register u32 *blockLength )
 {
   u32 offset = 0;
@@ -918,12 +919,14 @@ int main( const int argc, const char *argv[] )
     else
     {
       u8 *srcbuf = (u8 *)0;
-      i32 lengthROM;
+      u32 lengthROM;
 
       fseek( ROM, 0L, SEEK_END );
-      lengthROM = (i32)ftell( ROM );
+      lengthROM = (u32)ftell( ROM );
 
-      if ( (lengthROM == -1L) || (lengthROM >= 0x3FFFFFFFL) )
+      if (    (lengthROM == (u32)EOF)
+           || (lengthROM >= 0x3FFFFFFF)
+           || (lengthROM == 0) )
       {
         printf( "\n>>> Unsupported ROM file size!\n\n" );
         return _closeROM( ROM, 1 );
@@ -939,7 +942,7 @@ int main( const int argc, const char *argv[] )
         {
           rewind( ROM );
 
-          if ( (i32)fread( srcbuf, sizeof(u8), lengthROM, ROM ) != lengthROM )
+          if ( (u32)fread( srcbuf, sizeof(u8), lengthROM, ROM ) != lengthROM )
           {
             printf( "\n>>> Error reading from ROM file into buffer!\n\n" );
             return _closeROM( ROM, 1 );
@@ -987,7 +990,7 @@ int main( const int argc, const char *argv[] )
                     ++lengthROM;
                   }
 
-                  if ( (srcbuf = (u8 *)realloc( srcbuf, lengthROM ))
+                  if (    (srcbuf = (u8 *)realloc( srcbuf, lengthROM ))
                        == (u8 *)0 )
                   {
                     printf( "\n>>> Unable to extend for alignment!\n\n" );
@@ -997,11 +1000,11 @@ int main( const int argc, const char *argv[] )
 
                 printf( "# Found Nintendo 64 ROM Magic!\n"
                         "# Ordering bytes to Big-Endian.\n" );
-                _orderBytes( srcbuf, fourCC, (u32)lengthROM );
+                _orderBytes( srcbuf, fourCC, lengthROM );
 
                 if ( options.writeROM != 0 )
                 {
-                  if ( _writeROM( srcbuf, (u32)lengthROM, pathROM ) != 0 )
+                  if ( _writeROM( srcbuf, lengthROM, pathROM ) != 0 )
                   {
                     return EXIT_FAILURE;
                   }
@@ -1009,7 +1012,7 @@ int main( const int argc, const char *argv[] )
               }
             }
 
-            scanSLI( srcbuf, (u32)lengthROM, fourCC, cdirROM );
+            scanSLI( srcbuf, lengthROM, fourCC, cdirROM );
 
             if ( srcbuf != (u8 *)0 )
             {
@@ -1071,7 +1074,7 @@ static void _getPath( char *cdirROM )
 
 static char *_processArgs( const int argc, char *argv[] )
 {
-  char *pathROM = (char *)0;
+  char *pathROM;
   int c;
   int f = 0;
   int i = 1;
@@ -1079,7 +1082,7 @@ static char *_processArgs( const int argc, char *argv[] )
   if ( (pathROM = (char *)malloc( sizeof(char) * PPATH_MAX )) == (char *)0 )
   {
     printf( "\n>>> Unable to allocate work RAM for the file path!\n\n" );
-    return (char *)0;
+    goto err;
   }
 
   options.toDecode    = 0;
@@ -1121,7 +1124,7 @@ static char *_processArgs( const int argc, char *argv[] )
         if ( strlen( argv[i] ) >= PPATH_MAX )
         {
           printf( "\n>>> Path length is too long!\n\n" );
-          return (char *)0;
+          goto err;
         }
         else
         {
@@ -1132,8 +1135,7 @@ static char *_processArgs( const int argc, char *argv[] )
       else
       {
         printf( "\n>>> Erroneous arguments!\n\n" );
-        _usage();
-        return (char *)0;
+        goto usg;
       }
     }
 
@@ -1143,11 +1145,23 @@ static char *_processArgs( const int argc, char *argv[] )
   if ( f == 0 )
   {
     printf( "\n>>> No ROM file to process!\n\n" );
-    _usage();
-    return (char *)0;
+    goto usg;
   }
 
   return pathROM;
+
+usg:
+
+  _usage();
+
+err:
+
+  if ( pathROM != (char *)0 )
+  {
+    free( pathROM );
+  }
+
+  return pathROM = (char *)0;
 }
 
 
