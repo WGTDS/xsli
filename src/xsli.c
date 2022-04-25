@@ -1055,14 +1055,14 @@ static int _closeROM( FILE *ROM, const int code )
 
 static void _getPath( char *cdirROM )
 {
-  register unsigned i = 0;
+  register int i = 0;
 
   while ( cdirROM[i] != '\0' )
   {
     ++i;
   }
 
-  while ( (cdirROM[i] != '\\') && (cdirROM[i] != '/') )
+  while ( (cdirROM[i] != '\\') && (cdirROM[i] != '/') && (i >= 0) )
   {
     cdirROM[i--] = '\0';
   }
